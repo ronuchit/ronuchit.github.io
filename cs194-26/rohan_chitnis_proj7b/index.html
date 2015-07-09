@@ -1,0 +1,85 @@
+<html>
+  <body>
+    <h1>CS194 Project 7B: Feature Matching for Autostitching</h1>
+    <h2>Rohan Chitnis</h2>
+    (Skip to <a href="#extras">bells and whistles</a> section.)
+    <h3>Background</h3>
+    <p>For this project, we continued upon part A (<a href="https://inst.eecs.berkeley.edu/~cs194-26/fa14/upload/files/proj7A/cs194-mr/rohan_chitnis_proj7/">webpage</a>) to do automatic panorama creation! Basically, this boils down to selecting matching control points rather than relying on a user to do so; everything after this remains the same. For this part, I used Gaussian and Laplacian stacks with size 3 for all my blending, since this provided me the best results from the previous part.</p><p>I performed the following steps. First, I implemented my very own Harris corner detector (no built-in library!) and applied it to each image. This was done by directly porting the provided sample code to Python. Because too many points were being generated, I removed all points whose value for the corner strength function is lower than the 95th percentile. I then used a technique called adaptive non-maximal suppression to only keep a nearly uniformly distributed subset of the chosen points for each image. For this, I followed the paper: for each Harris point, I obtained the minimum suppression radius as the distance to the closest other Harris point such that the corner strength of this point is less than 0.9 times the corner strength of the other. This means that the neighbor must have sufficiently larger corner strength. I then selected the 150 points with highest minimum suppression radius value. Afterward, I assigned each of these 150 points a feature: 64 pixels sampled evenly from the 40x40 grid around that point and normalized. Next, I matched points in each image using these features. My cutoff here was that the ratio of 1-NN / 2-NN distances from a point's features to the features of other points must be less than 0.6, a ratio which in practice worked well for me. Finally, I used 4-point RANSAC straightforwardly as described <a href="http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/FISHER/RANSAC/">here</a> to compute a good, robust homography matrix not affected by outliers/noise. My threshold for a set of points being in the inlier set was that the norm of the expected point minus the actual point must be less than 1 pixel. The results are quite amazing!</p>
+    <h3>Results</h3>
+    <p>Here, I trace through the algorithm presented in the Background section with a specific pictoral example.</p>
+    <img src="images/lecture1.jpg" alt="village" width="400p">
+    <img src="images/lecture2.jpg" alt="village" width="400p">
+    <figcaption>The original 2 images of a lecture hall in Berkeley.</figcaption></br>
+    <img src="images/auto_harris1.png" alt="village" width="300p">
+    <img src="images/auto_harris2.png" alt="village" width="300p">
+    <figcaption>Harris points of interest for each image.</figcaption></br>
+    <img src="images/auto_suppressed1.png" alt="village" width="300p">
+    <img src="images/auto_suppressed2.png" alt="village" width="300p">
+    <figcaption>Points of interest after filtering using adaptive non-maximal suppression. As expected, they are roughly uniformly distributed throughout the images.</figcaption></br>
+    <img src="images/auto_points1.png" alt="village" width="300p">
+    <img src="images/auto_points2.png" alt="village" width="300p">
+    <figcaption>The automatically determined control points in each image, after feature matching and rejection.</figcaption></br>
+    <img src="images/lecture_mosaic_automatic.jpg" alt="village" width="500p">
+    <img src="images/lecture_mosaic_stacks.jpg" alt="village" width="500p">
+    <figcaption>Left: Automatically stitched mosaic with a homography matrix computed using RANSAC, just as beautiful and well-aligned as with user-defined control points!!!</figcaption>
+    <figcaption>Right: For reference, the manually stitched result.</figcaption></br>
+    <p>Here are some other examples.</p>
+    <img src="images/theatre1.jpg" alt="village" width="300p">
+    <img src="images/theatre2.jpg" alt="village" width="300p">
+    <figcaption>Original images of a theatre on Shattuck.</figcaption></br>
+    <img src="images/theatre_mosaic_automatic.jpg" alt="village" width="500p">
+    <img src="images/theatre_mosaic_stacks.jpg" alt="village" width="500p">
+    <figcaption>Left: Automatically stitched mosaic. It looks as nice as the manually stitched one to its right!</figcaption>
+    <figcaption>Right: For reference, the manually stitched result.</figcaption></br>
+    <img src="images/soda1.jpg" alt="village" width="300p">
+    <img src="images/soda2.jpg" alt="village" width="300p">
+    <img src="images/soda3.jpg" alt="village" width="300p">
+    <figcaption>Original images outside HP Auditorium!</figcaption></br>
+    <img src="images/soda_mosaic_automatic.jpg" alt="village" width="500p">
+    <img src="images/soda_mosaic_stacks.jpg" alt="village" width="500p">
+    <figcaption>Left: Automatically stitched mosaic. Note that there are minor alignment issues at one area along the ground. This is due to the periodicity of the floor pattern causing some Harris points on the floor to incorrectly match (since all these points have very similar feature descriptors).</figcaption>
+    <figcaption>Right: For reference, the manually stitched result.</figcaption></br>
+    <h3>What I Learned</h3>
+    <p>I learned that approximating homography matrices is actually not all that complex. RANSAC is a naive but powerful algorithm -- I was very surprised that this kind of guess-and-check method could actually be so robust and useful in practice. My favorite part was definitely extracting and matching feature descriptors for points, because it's just amazing how we can identify matching landmarks in different images.</p>
+    <a name="extras">
+    <h3>Bells and Whistles</h3>
+    <p><b>NOTE: There are more bells and whistles on my webpage for part A, linked at the top of this page.</b></p>
+    <p><b>1. Rotational Invariance</b></p>
+    <p>I successfully implemented rotational invariance as follows. First, for each Harris point, we compute the associated orientation vector as the vector of [smoothed x derivative, smoothed y derivative] at that coordinate. The smoothed derivative is obtained by simply sending each derivative through a Gaussian filter with parameter 4.5, as suggested in the paper. Call this orientation vector <b>u</b>. Second, to rotate the feature descriptor grid, we begin by observing that each point in the grid could originally be computed as grid_pt = img_center + 5 * i * [0, 1] + 5 * j * [1, 0], where i ranges from -3 to 4 and j ranges from -3 to 4. So, for the rotated case, we perform a change of basis and obtain grid_pt = img_center + 5 * i * <b>u</b> + 5 * j * <b>u_perp</b>, where <b>u_perp</b> equals <b>u</b> rotated by 90 degrees in either direction. Here are my results showcasing correctness.</p>
+    <img src="images/lecture1.jpg" alt="village" width="400p">
+    <img src="images/lecture2_rotated.jpg" alt="village" width="400p">
+    <figcaption>The original 2 images I used. The second one is a rotated version of the one illustrated before.</figcaption></br>
+    <img src="images/lecture_rotation_norotationpoints1.png" alt="village" width="400p">
+    <img src="images/lecture_rotation_norotationpoints2.png" alt="village" width="400p">
+    <figcaption>With rotational invariance turned OFF (so using the original code), here are the control points found by matching feature descriptors (yep, no matches are found!).</figcaption></br>
+    <img src="images/lecture_rotation_points1.png" alt="village" width="400p">
+    <img src="images/lecture_rotation_points2.png" alt="village" width="400p">
+    <figcaption>Now using rotational invariance, here are the control points found by matching feature descriptors! Yay, it works!</figcaption></br>
+    <img src="images/lecture_rotation_mosaic.jpg" alt="village" width="500p">
+    <figcaption>Finally, the resulting mosaic, which looks nice just like before, save some minor alignment issues! Note that the black space occupying the bottom half of the image is simply a result of the increased output image dimensions due to the second image being rotated.</figcaption></br>
+    <p><b>2. Panorama Recognition</b></p>
+    <p>I implemented panorama recognition from an unordered set. In order to do this, I followed and implemented the algorithm described in <a href="https://www.cs.bath.ac.uk/brown/papers/iccv2003.pdf">this</a> paper. The core idea is that after my RANSAC homography matrix calculation, I determine the total number of features (n_f), as well as the number of features in the inlier set for the finally chosen matrix (n_i). I then use the formula derived in the paper, n_i > 5.9 + 0.22 * n_f, as my threshold for keeping a particular image within the mosaic.  Here are some results. Note that if no images in the entire set are determined to create a panorama, I default to returning the first image.</p>
+    <p><b>Case 1</b></p>
+    <img src="images/lecture1.jpg" alt="village" width="300p">
+    <img src="images/theatre1.jpg" alt="village" width="300p">
+    <img src="images/lecture2.jpg" alt="village" width="300p">
+    <figcaption>The original 3 images. Note that only the first and the third form a panorama.</figcaption></br>
+    <img src="images/panorama_recognition1.jpg" alt="village" width="500p">
+    <figcaption>Result. The second image has been discarded.</figcaption></br>
+    <p><b>Case 2</b></p>
+    <img src="images/soda1.jpg" alt="village" width="300p">
+    <img src="images/soda2.jpg" alt="village" width="300p">
+    <img src="images/soda3.jpg" alt="village" width="300p">
+    <figcaption>The original 3 images. All three form a panorama.</figcaption></br>
+    <img src="images/panorama_recognition2.jpg" alt="village" width="500p">
+    <figcaption>Result. No images have been discarded.</figcaption></br>
+    <p><b>Case 3</b></p>
+    <img src="images/theatre1.jpg" alt="village" width="300p">
+    <img src="images/lecture1.jpg" alt="village" width="300p">
+    <img src="images/office1.jpg" alt="village" width="300p">
+    <figcaption>The original 3 images. None of them form a panorama.</figcaption></br>
+    <img src="images/panorama_recognition3.jpg" alt="village" width="500p">
+    <figcaption>Result. As expected, the code defaults to simply outputting the first image provided.</figcaption></br>
+    </a>
+  </body>
+</html>

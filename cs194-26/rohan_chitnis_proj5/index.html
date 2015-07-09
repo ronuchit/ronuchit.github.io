@@ -1,0 +1,64 @@
+<html>
+  <body>
+    <h1>CS194 Project 5: Face Morphing</h1>
+    <h2>Rohan Chitnis</h2>
+    (Skip to <a href="#extras">bells and whistles</a> section.)
+    <h3>Background</h3>
+    <p>For this project, we used triangulation and affine transformations to create warps between images. Basically, the algorithm I employed is as follows. First, select control points for each image, and determine a Delaunay triangulation based on the average of these points. Currently, my code requires the user to enter 30 control points per image. Then, linearly interpolate these two sets of control points according to some parameter, which we call warp_frac, and compute the affine transformations between the triangles (from the triangulation) of these interpolated points to the triangles of each original image's control points. Next, loop through the pixels of the output image and, for each one, determine which triangle it's in, and left-multiply the matrix transforming this (i, j) pixel to the first image and to the second image. Finally, blend the corresponding pixel in each of these images according to some other parameter, which we call dissolve_frac.</p>
+    <h3>Basic Morphing</h3>
+    <img src="images/rohan_chitnis.jpg" alt="village" width="300p">
+    <img src="images/alex_chu.jpg" alt="village" width="300p">
+    <figcaption>Left: The running image of me which I use for all demonstrations.</figcaption>
+    <figcaption>Right: The image of my handsome Chinese friend, Alex Chu (his project can be found <a href="https://inst.eecs.berkeley.edu/~cs194-26/fa14/upload/files/proj5/cs194-ek/">here</a>).</figcaption></br>
+    <img src="images/triangulation_rohan_alex_40.png" alt="village" width="300p">
+    <img src="images/midway_rohan_alex.png" alt="village" width="300p">
+    <figcaption>Left: Visualization of an example of Delaunay triangulation on control points on my face. These control points roughly represent the template I used for most of my images, with minor variations. An interesting point here is that I add the corners of the image before computing any triangulation, to ensure that all points in the output image will be contained in <i>some</i> triangle.</figcaption>
+    <figcaption>Right: The midway morph from my face to Alex's. This was simply obtained by utilizing the exact algorithm described in the background section, with warp_frac = dissolve_frac = 0.5. Notice that in this image, although it seems to have mostly my facial features and structure, my skin tone is lighter to match his and my eyes and nose have slightly shrunk.</figcaption></br>
+    <img src="video/rohan_to_alex.gif" alt="village" width="300p">
+    <figcaption>Finally, a full morph from my face to Alex's! This was obtained by incrementing warp_frac and dissolve_frac together linearly from 0.0 to 1.0 with 45 steps, then putting the resulting images together into a gif. This morphing is very smooth and there is no noticeable distortion! Recall again that the Delaunay triangulation is computed once at the very beginning based on the average of the control points.</figcaption></br>
+    <img src="video/rohan_avg_english_woman_both.gif" alt="village" width="300p">
+    <img src="video/shuai_rohan_video.gif" alt="village" width="300p">
+    <figcaption>Just some more awesome examples of morphing, explained later but frontloaded here for viewing pleasure! These were all obtained in the same way as before.</figcaption></br>
+    <h3>Mean Face of a Population</h3>
+    <p>For this part, I found the mean face of a population using a generalized version of the basic two-image algorithm. I used the small Danes annotated dataset, which contains ~40 images of people's faces, and I computed the average shape of all the control points. Then, for each image in the dataset, I morphed it to the average shape using the standard morph algorithm with warp_frac = 1 and dissolve_frac = 0 (this morphs only the shape, but not the appearance/color of each face). I then averaged together all the resulting morphed images to obtain the population mean face.</p>
+    <img src="images/average_face.jpg" alt="village" width="300p">
+    <figcaption>Here's the average face that I got! It's interesting how this face looks attractive even though it is the average of people of different genders and facial structures, which suggests that we as humans find the low frequencies in people's faces (which are preserved by the averaging operation) generally attractive, and the high frequencies which make our faces distinct are what truly determine how we judge attractiveness.</figcaption></br>
+    <img src="images/compute_avg_face_ex1.png" alt="village" width="400p">
+    <img src="images/compute_avg_face_ex2.png" alt="village" width="400p">
+    <figcaption>Here are some examples of faces in the dataset being morphed into the average shape (as part of the process toward obtaining the above average face image), using warp_frac = 1 and dissolve_frac = 0! The slight distortion and cracking is expected due to the triangulation, since we are not blending colors here.</figcaption></br>
+    <img src="video/06_to_31.gif" alt="village" width="400p">
+    <figcaption>I know it wasn't required, but I tried morphing some images in the dataset into each other to see how good the annotated control points are. The results were great so I wanted to share one!</figcaption></br>
+    <img src="images/average_face_to_rohan.png" alt="village" width="300p">
+    <img src="images/rohan_to_average_face.png" alt="village" width="300p">
+    <figcaption>And here is the result of my own face warped to the average face's shape, and vice versa, just like I did with each image in the dataset! As before, some distortion and cracking is expected due to the triangulation, since we are not blending colors here. Notice that in the left image, the average face begins to develop my facial structure, such as lips and nose size, while the opposite effect occurs in the right image, as expected.</figcaption></br>
+    <img src="video/average_face_to_rohan.gif" alt="village" width="300p">
+    <img src="video/rohan_to_average_face.gif" alt="village" width="300p">
+    <figcaption>For fun, here are the morphs between my face and the average face!</figcaption></br>
+    <img src="images/caricature.jpg" alt="village" width="300p">
+    <figcaption>I produced a caricature of my face by morphing my face to the average face's shape as before, but changing the control points of the average face to add 1.65 times the difference between the two images' control points. This functions to effectively extrapolate from the image of the average face. Notice how in this image, my eyes and other facial features are exaggerated, and my jawline is slightly warped. Increasing this multiplier above 1.65 generated distortion that detracted from the quality of the image.</figcaption></br>
+    <img src="video/rohan_caricature.gif" alt="village" width="300p">
+    <figcaption>No morphing image is complete without its corresponding video!</figcaption></br>
+    <a name="extras">
+    <h3>Bells and Whistles</h3>
+    <p><b>1. Changed my age, gender, and ethnicity to those of the average English woman.</b></p>
+    <p>I found the average face of an English woman and morphed my shape, appearance, and both into it. Here are videos of the result in each case!</p>
+    <img src="images/rohan_chitnis.jpg" alt="village" width="300p">
+    <img src="images/average_english_woman_face.jpg" alt="village" width="300p">
+    <figcaption>The original images. <b>Source for average face image:</b> http://www.faceresearch.org/</figcaption></br>
+    <img src="video/rohan_avg_english_woman_shape.gif" alt="village">
+    <img src="video/rohan_avg_english_woman_appearance.gif" alt="village">
+    <img src="video/rohan_avg_english_woman_both.gif" alt="village">
+    <figcaption>Left: Morphing just the shape. Warp_frac = 1, dissolve_frac = 0.</figcaption>
+    <figcaption>Middle: Morphing just the appearance. Warp_frac = 0, dissolve_frac = 1, so no warping or transformations are happening here, just color blending.</figcaption>
+    <figcaption>Right: The final result morphing both. Notice how combining these two processes eliminates all residual cracking effects from the triangulation, because we are now blending color along with the shape.</figcaption></br>
+    <p><b>2. Morphing music video of myself at different ages.</b></p>
+    <p>Check out this music video showcasing my aging thus far from being a baby, to being a young child, to being my current age, to being a famous handsome Indian Bollywood actor in the future (Shah Rukh Khan), to being Gandhi when I'm old! Made with Youtube Video Editor since I'm not pro enough to know how to use real video editing software.</p>
+    <p><a href="https://www.youtube.com/watch?v=E1CaWjsz_88&list=UUCJFkIip-gk_5N9hYyJ684Q&index=1"><font size=20>Music Video!</font></a></p>
+    <p><b>3. Class-wide morphing chain!</b></p>
+    <p>I participated in this chain, morphing Shuai's face to my own! Here are the original images and results. Again, no deformation and the results are quite seamless and aesthetically pleasing!</p>
+    <img src="images/rohan_chitnis_chain.jpg" alt="village">
+    <img src="images/shuai.jpg" alt="village">
+    <img src="video/shuai_rohan_video.gif" alt="village">
+    </a>
+  </body>
+</html>

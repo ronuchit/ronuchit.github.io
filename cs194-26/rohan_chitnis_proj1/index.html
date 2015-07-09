@@ -1,0 +1,114 @@
+<html>
+  <body>
+    <h1>CS194 Project 1: Colorizing the Prokudin-Gorskii photo collection</h1>
+    <h2>Rohan Chitnis</h2>
+    <h3>Background and Images</h3>
+    (Skip to <a href="#extras">bells and whistles</a> section.)
+    <p>The purpose of this project was to extract and align three images, representing three color channels, to form a single color image. First, I implemented a single-scale version, which uses the SSD metric to score the displacement between images. I then aligned both the red and the green images to the blue one using this error metric. Then, because this exhaustive search method is very slow for high-quality TIF images, I implemented coarse-to-fine pyramid speedup, which continually halved the image size and looped over larger displacements for smaller image sizes. I then added together all the optimal displacements obtained at each level, weighted more strongly for the smaller image sizes.</p>
+    <p>I then observed that this method doesn't quite work for images such as Emir and selfie, because the images have different brightness values. To remedy this, I decided to apply a canny edge detector to the images before aligning them, which means the alignment is between two binary images. This fixed the problem and made Emir and selfie align properly. The difference for selfie is demonstrated near the bottom.</p>
+    <p>Furthermore, I implemented the techniques of automatic contrasting, automatic white balancing, and automatic border cropping. The images that follow have the contrasting and white balancing applied, but not the cropping. More explanation of my implementation of these extra tasks is given near the bottom.</p>
+    <figure>
+      <img src="images/antique_out_auto_contrasting_white_balancing.jpg" alt="antique" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 12, Red Y: 1, Green X: 3, Green Y: 1</figcaption>
+    </figure>
+    <figure>
+      <img src="images/bridge_out_auto_contrasting_white_balancing.jpg" alt="bridge" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 69, Red Y: 5, Green X: 15, Green Y: -2</figcaption>
+    </figure>
+    <figure>
+      <img src="images/cathedral_out_auto_contrasting_white_balancing.jpg" alt="cathedral" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 12, Red Y: 3, Green X: 5, Green Y: 2</figcaption>
+    </figure>
+    <figure>
+      <img src="images/emir_out_auto_contrasting_white_balancing.jpg" alt="emir" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 107, Red Y: 40, Green X: 49, Green Y: 23</figcaption>
+    </figure>
+    <figure>
+      <img src="images/harvesters_out_auto_contrasting_white_balancing.jpg" alt="harvesters" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 117, Red Y: 11, Green X: 55, Green Y: 10</figcaption>
+    </figure>
+    <figure>
+      <img src="images/lady_out_auto_contrasting_white_balancing.jpg" alt="lady" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 120, Red Y: 13, Green X: 56, Green Y: 10</figcaption>
+    </figure>
+    <figure>
+      <img src="images/melons_out_auto_contrasting_white_balancing.jpg" alt="melons" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 182, Red Y: 11, Green X: 89, Green Y: 9</figcaption>
+    </figure>
+    <figure>
+      <img src="images/monastery_out_auto_contrasting_white_balancing.jpg" alt="monastery" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 3, Red Y: 2, Green X: -3, Green Y: 2</figcaption>
+    </figure>
+    <figure>
+      <img src="images/onion_church_out_auto_contrasting_white_balancing.jpg" alt="onion_church" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 107, Red Y: 34, Green X: 52, Green Y: 24</figcaption>
+    </figure>
+    <figure>
+      <img src="images/selfie_out_auto_contrasting_white_balancing.jpg" alt="selfie" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 175, Red Y: 37, Green X: 83, Green Y: 29</figcaption>
+    </figure>
+    <figure>
+      <img src="images/settlers_out_auto_contrasting_white_balancing.jpg" alt="settlers" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 14, Red Y: -1, Green X: 7, Green Y: 0</figcaption>
+    </figure>
+    <figure>
+      <img src="images/three_generations_out_auto_contrasting_white_balancing.jpg" alt="three_generators" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 106, Red Y: 7, Green X: 56, Green Y: 11</figcaption>
+    </figure>
+    <figure>
+      <img src="images/tobolsk_out_auto_contrasting_white_balancing.jpg" alt="tobolsk" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 6, Red Y: 3, Green X: 3, Green Y: 2</figcaption>
+    </figure>
+    <figure>
+      <img src="images/train_out_auto_contrasting_white_balancing.jpg" alt="train" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 84, Red Y: 28, Green X: 40, Green Y: 8</figcaption>
+    </figure>
+    <figure>
+      <img src="images/tree_out_auto_contrasting_white_balancing.jpg" alt="tree" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 11, Red Y: 9, Green X: 5, Green Y: 5</figcaption>
+    </figure>
+    <figure>
+      <img src="images/turkmen_out_auto_contrasting_white_balancing.jpg" alt="turkmen" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 117, Red Y: 29, Green X: 55, Green Y: 17</figcaption>
+    </figure>
+    <figure>
+      <img src="images/village_out_auto_contrasting_white_balancing.jpg" alt="village" style="width:400px;height:400px">
+      <figcaption>Offsets: Red X: 138, Red Y: 22, Green X: 67, Green Y: 12</figcaption>
+    </figure>
+    <a name="extras">
+    <h3>Bells and Whistles</h3>
+    <p><b>1. Better features: use canny edge detection before SSD displacement calculation, instead of using raw pixel values.</b></p>
+    <figure>
+      <img src="images/selfie_out_no_canny.jpg" alt="selfie" style="width:400px;height:400px">
+      <figcaption>Image without canny edge detection -- uses raw pixel values instead.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/selfie_out.jpg" alt="selfie" style="width:400px;height:400px">
+      <figcaption>Image with canny edge detection. Note the improvement in quality of alignment!</figcaption>
+    </figure>
+    <p><b>2. Automatic contrasting: I determine the 5th and 95th percentile pixel values for each color channel, then set pixels below the 5th percentile to 0.0 and above the 95th percentile to 1.0. I then scale all other pixels appropriately.</b></p>
+    <img src="images/emir_out.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image without automatic contrasting.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/emir_out_auto_contrasting.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image with automatic contrasting. Note the more vibrant colors, especially in his clothing!</figcaption>
+    </figure>
+    <p><b>3. Automatic white balancing: I first tried a white world approach, but that didn't work too well. I then utilized a gray world approach, where I calculated the gain of the red pixels as average green intensity over average red intensity, and gain of the blue pixels as average green intensity over average blue intensity. I then multiplied the red pixel intensities by the red gain, and similarly for the blue pixels.</b></p>
+    <img src="images/onion_church_out_auto_contrasting.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image without automatic white balancing.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/onion_church_out_auto_contrasting_white_balancing.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image with automatic white balancing. Note that the blue tint has disappeared, making the image seem more realistic to our brains!</figcaption>
+    </figure>
+    <p><b>4. Automatic border cropping: I again used a canny edge detector to obtain an edge map of the image. With this, I considered the first 10% of rows/columns from each edge, and found the highest-intensity horizontal/vertical pixel strip closest to the center of the image, and used this as the crop point. Unfortunately, a shortcoming of this algorithm is that if the border noise is not axis-aligned, no corresponding straight-line intensity will be very high. Also, if the noise is not very noticeable, an edge detector might not pick up on it.</b></p>
+    <img src="images/monastery_out_auto_contrasting_white_balancing.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image without automatic border cropping.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/monastery_out_auto_contrasting_white_balancing_cropped.jpg" alt="church" style="width:400px;height:400px">
+      <figcaption>Image with automatic cropping. Note that the left and right border noise has been comepletely removed, and the lower border noise has been significantly reduced. However, my algorithm does not work perfectly at cropping this image.</figcaption>
+    </figure>
+  </body>
+</html>
